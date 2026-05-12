@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Resume Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary:    #2563eb;
+    --primary-dk: #1d4ed8;
+    --success:    #16a34a;
+    --warning:    #d97706;
+    --danger:     #dc2626;
+    --bg:         #f1f5f9;
+    --card:       #ffffff;
+    --border:     #e2e8f0;
+    --text:       #0f172a;
+    --muted:      #64748b;
+    --radius:     12px;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 0 40px; display: flex; align-items: center; height: 64px; gap: 16px; }
+  .logo  { width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  header h1 { color: #fff; font-size: 17px; font-weight: 600; }
+  header p  { color: #94a3b8; font-size: 12px; margin-top: 1px; }
+  .header-badge { margin-left: auto; background: rgba(37,99,235,0.3); color: #93c5fd; font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(147,197,253,0.3); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+
+  /* ── CARDS ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
+  .card-header h2 { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .card-header p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .card-body { padding: 22px; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 18px; }
+  label { font-size: 12px; font-weight: 600; color: #374151; letter-spacing: 0.3px; display: block; margin-bottom: 7px; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: #f8fafc;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: #eff6ff; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-icon { font-size: 32px; margin-bottom: 8px; }
+  .drop-label { font-size: 13px; font-weight: 500; color: var(--primary); }
+  .drop-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .file-chosen { margin-top: 10px; font-size: 12px; color: var(--success); font-weight: 500; display: none; }
+
+  textarea {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: 'Inter', sans-serif; resize: vertical;
+    outline: none; transition: border 0.2s; color: var(--text); background: #fff;
+  }
+  textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: 9px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .btn-primary { background: var(--primary); color: #fff; width: 100%; justify-content: center; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-dk); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── RESULTS ── */
+  .result-placeholder { padding: 60px 20px; text-align: center; color: var(--muted); }
+  .result-placeholder .big-icon { font-size: 48px; margin-bottom: 12px; }
+  .result-placeholder p { font-size: 13px; }
+
+  .score-hero { padding: 28px 22px; text-align: center; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, #f0f9ff, #eff6ff); }
+  .score-ring { width: 110px; height: 110px; margin: 0 auto 14px; position: relative; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-number { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: var(--text); }
+  .score-grade  { font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .score-verdict { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px 22px; border-bottom: 1px solid var(--border); }
+  .metric { background: #f8fafc; border-radius: 8px; padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  .metric-val   { font-size: 20px; font-weight: 700; color: var(--text); }
+  .metric-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .skills-section { padding: 18px 22px; border-bottom: 1px solid var(--border); }
+  .skills-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+  .tag-green   { background: #dcfce7; color: #166534; }
+  .tag-red     { background: #fee2e2; color: #991b1b; }
+  .tag-blue    { background: #dbeafe; color: #1e40af; }
+  .tag-gray    { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  .candidate-info { padding: 18px 22px; }
+  .candidate-info h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--muted); }
+  .info-val { font-weight: 600; color: var(--text); }
+
+  /* ── SPINNER ── */
+  .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading .spinner { display: block; }
+  .loading .btn-text { display: none; }
+  .btn-text { display: block; }
+
+  /* ── ERROR ── */
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #991b1b; display: none; }
+
+  @media (max-width: 800px) {
+    .container { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AI</div>
+  <div>
+    <h1>AI Resume Screener</h1>
+    <p>NLP-powered resume–JD matching engine</p>
+  </div>
+  <div class="header-badge">Python · Flask · TF-IDF · LightGBM</div>
+</header>
+
+<div class="container">
+
+  <!-- LEFT: FORM -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📄 Upload &amp; Screen</h2>
+      <p>Upload a resume and paste the job description</p>
+    </div>
+    <div class="card-body">
+
+      <div id="errorBox" class="error-box"></div>
+
+      <div class="form-group">
+        <label>RESUME FILE</label>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" />
+          <div class="drop-icon">📂</div>
+          <div class="drop-label">Drop file here or click to browse</div>
+          <div class="drop-sub">PDF, DOCX or TXT · max 16 MB</div>
+          <div class="file-chosen" id="fileChosen">✅ <span id="fileName"></span></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>JOB DESCRIPTION</label>
+        <textarea id="jdText" rows="10" placeholder="Paste the full job description here...
+
+Example:
+We are looking for a Python Developer with:
+- 2+ years experience in Flask or Django
+- Machine learning and NLP skills
+- REST API design and deployment
+- Experience with scikit-learn, pandas, numpy
+- SQL / MySQL database knowledge
+- Git and Agile development practices"></textarea>
+      </div>
+
+      <button class="btn btn-primary" id="screenBtn" onclick="screenResume()">
+        <div class="spinner"></div>
+        <span class="btn-text">🔍 Screen Resume</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div id="resultPanel" class="card">
+    <div class="card-header">
+      <h2>📊 Screening Results</h2>
+      <p>Match analysis will appear here</p>
+    </div>
+    <div id="resultContent">
+      <div class="result-placeholder">
+        <div class="big-icon">🤖</div>
+        <p>Upload a resume and enter a job<br>description to see the AI analysis</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5000/api';
+
+// ── File drag & drop ──────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('resumeFile');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; showFile(fileInput.files[0].name); }
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) showFile(fileInput.files[0].name);
+});
+
+function showFile(name) {
+  document.getElementById('fileName').textContent = name;
+  document.getElementById('fileChosen').style.display = 'block';
+}
+
+// ── Screen resume ─────────────────────────────────────────
+async function screenResume() {
+  const file   = fileInput.files[0];
+  const jdText = document.getElementById('jdText').value.trim();
+  const btn    = document.getElementById('screenBtn');
+  const errBox = document.getElementById('errorBox');
+
+  errBox.style.display = 'none';
+
+  if (!file)   return showError('Please upload a resume file.');
+  if (!jdText) return showError('Please enter the job description.');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const fd = new FormData();
+    fd.append('resume',  file);
+    fd.append('jd_text', jdText);
+
+    const res  = await fetch(`${API_BASE}/screen`, { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (!res.ok) return showError(data.error || 'Screening failed.');
+
+    renderResult(data, file.name);
+  } catch (e) {
+    showError('Cannot connect to the API server. Make sure Flask is running on port 5000.');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+function showError(msg) {
+  const b = document.getElementById('errorBox');
+  b.textContent = '⚠️  ' + msg;
+  b.style.display = 'block';
+  document.getElementById('screenBtn').classList.remove('loading');
+  document.getElementById('screenBtn').disabled = false;
+}
+
+// ── Render result ─────────────────────────────────────────
+function renderResult(d, filename) {
+  const score   = d.final_score;
+  const colors  = { A: '#16a34a', B: '#2563eb', C: '#d97706', D: '#dc2626' };
+  const color   = colors[d.grade] || '#64748b';
+  const ci      = d.candidate_info || {};
+
+  const circum  = 2 * Math.PI * 44;
+  const offset  = circum - (score / 100) * circum;
+
+  const tagsHtml = (arr, cls) =>
+    arr.length ? arr.map(s => `<span class="tag ${cls}">${s}</span>`).join('') : '<span class="tag tag-gray">None detected</span>';
+
+  document.getElementById('resultContent').innerHTML = `
+    <div class="score-hero">
+      <div class="score-ring">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="44" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+          <circle cx="55" cy="55" r="44" fill="none" stroke="${color}" stroke-width="8"
+            stroke-dasharray="${circum.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="score-number" style="color:${color}">${score.toFixed(0)}%</div>
+      </div>
+      <div class="score-grade" style="color:${color}">Grade ${d.grade}</div>
+      <div class="score-verdict">${d.verdict}</div>
+    </div>
+
+    <div class="result-grid">
+      <div class="metric">
+        <div class="metric-label">TF-IDF Score</div>
+        <div class="metric-val" style="color:var(--primary)">${d.cosine_score.toFixed(1)}%</div>
+        <div class="metric-sub">Text similarity</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Skill Match</div>
+        <div class="metric-val" style="color:var(--success)">${d.skill_score.toFixed(1)}%</div>
+        <div class="metric-sub">Keyword overlap</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Matched Skills</div>
+        <div class="metric-val">${d.matched_skills.length}</div>
+        <div class="metric-sub">of ${d.jd_skills.length} required</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Missing Skills</div>
+        <div class="metric-val" style="color:var(--danger)">${d.missing_skills.length}</div>
+        <div class="metric-sub">gaps to bridge</div>
+      </div>
+    </div>
+
+    <div class="skills-section">
+      <h3>✅ Matched Skills</h3>
+      <div class="skill-tags">${tagsHtml(d.matched_skills, 'tag-green')}</div>
+    </div>
+
+    <div class="skills-section">
+      <h3>❌ Missing Skills (from JD)</h3>
+      <div class="skill-tags">${tagsHtml(d.missing_skills, 'tag-red')}</div>
+    </div>
+
+    <div class="skills-section">
+      <h3>💡 Extra Skills in Resume</h3>
+      <div class="skill-tags">${tagsHtml(d.extra_skills, 'tag-blue')}</div>
+    </div>
+
+    <div class="candidate-info">
+      <h3>👤 Candidate Info</h3>
+      <div class="info-row"><span class="info-key">File</span><span class="info-val">${filename}</span></div>
+      <div class="info-row"><span class="info-key">Education</span><span class="info-val">${ci.education || 'N/A'}</span></div>
+      <div class="info-row"><span class="info-key">Experience</span><span class="info-val">${ci.experience_years > 0 ? ci.experience_years + ' yrs' : 'Fresher / Not stated'}</span></div>
+      <div class="info-row"><span class="info-key">Skills found</span><span class="info-val">${(ci.skills_found || []).length} total</span></div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
