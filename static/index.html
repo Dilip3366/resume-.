@@ -202,7 +202,7 @@ We are looking for a Python Developer with:
 </div>
 
 <script>
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // ── File drag & drop ──────────────────────────────────────
 const dropZone = document.getElementById('dropZone');
@@ -252,7 +252,7 @@ async function screenResume() {
 
     renderResult(data, file.name);
   } catch (e) {
-    showError('Cannot connect to the API server. Make sure Flask is running on port 5000.');
+    showError('Could not connect to the screening API. Please try again.');
   } finally {
     btn.classList.remove('loading');
     btn.disabled = false;

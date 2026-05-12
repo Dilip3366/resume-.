@@ -1,0 +1,10 @@
+{
+  "name": "resume-screener",
+  "version": "1.0.0",
+  "description": "AI-powered resume screening system",
+  "type": "module",
+  "dependencies": {
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1"
+  }
+}
